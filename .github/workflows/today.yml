@@ -1,0 +1,27 @@
+name: today
+on:
+  schedule:
+    - cron: '5 9 * * *'        # 05:05 EDT
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  today:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish today's simulated white dwarf to the 'today' branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          n=$(ls variants/wd-*-dark.svg | wc -l)
+          day=$((10#$(date -u +%j)))
+          tag=$(printf '%02d' $(( day % n + 1 )))
+          mkdir out
+          cp "variants/wd-$tag-dark.svg" out/wd-dark.svg
+          cp "variants/wd-$tag-light.svg" out/wd-light.svg
+          cd out
+          git init -q -b today
+          git add .
+          git -c user.name=jackwenenn -c user.email=342241724+jackwenenn@users.noreply.github.com commit -q -m "today: $tag"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" today
